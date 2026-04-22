@@ -1,0 +1,9 @@
+if SHIELD_SICK68
+
+config KEYBOARD_NAME
+    default "SiCK-68"
+
+config ZMK_KEYBOARD_NAME
+    default "SiCK-68"
+
+endif
