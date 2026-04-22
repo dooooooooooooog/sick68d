@@ -1,41 +1,68 @@
 /*
  * SiCK-68 ZMK Shield Overlay
- * Controller: Nice!Nano 
+ * Controller: Nice!Nano (nRF52840)
  *
- * Wiring based on original Teensy 2.0 diagram, remapped to Nice!Nano pins.
+ * Using native &gpio0 / &gpio1 pins directly instead of &pro_micro
+ * to avoid pro_micro gpio-map boundary issues.
  *
- * Teensy 2.0 → Nice!Nano pin mapping used here:
- *   Rows (Teensy → Nice!Nano GPIO):
- *     B0 → P0.08  (D4  on Nice!Nano)
- *     B1 → P0.17  (D5  on Nice!Nano) -- actually mapped below to physical
- *     B2 → P0.20  (D6)
- *     B3 → P0.22  (D7)
- *     B7 → P1.00  (D14/A6)
+ * Nice!Nano v2 physical pin → nRF52840 GPIO mapping:
  *
- *   Cols (Teensy → Nice!Nano GPIO):
- *     F5 → P0.30  (A2)
- *     F6 → P0.31  (A1)
- *     F7 → P0.29  (A0)
- *     B6 → P0.02  (15)
- *     B5 → P1.13  (16)
- *     B4 → P1.11  (14)  -- careful: verify with your board silk
- *     D7 → P0.24  (D3)
- *     D4 → P1.00  -- CONFLICT: see note below
- *     D5 → P0.13  (D9)
- *     C7 → P0.15  (D10)
- *     C6 → P0.17  (D8)
- *     D3 → P0.20  -- CONFLICT: see note below
- *     D2 → P0.22  -- CONFLICT with row
- *     D1 → P0.09  (D1 TX)
- *     D0 → P0.10  (D0 RX)
+ *  Left side  (top to bottom):
+ *   Pin 1  → P0.06   (D1 / TX)
+ *   Pin 2  → P0.08   (D0 / RX)
+ *   Pin 3  → P0.17   (D2)
+ *   Pin 4  → P0.20   (D3)
+ *   Pin 5  → P0.22   (D4)
+ *   Pin 6  → P0.24   (D5)
+ *   Pin 7  → P1.00   (D6)
+ *   Pin 8  → P0.11   (D7)
+ *   Pin 9  → P1.04   (D8)
+ *   Pin 10 → P1.06   (D9)
  *
- * ⚠️  IMPORTANT: The Teensy 2.0 has more GPIO than Nice!Nano's exposed pins.
- *     Because of this, the mapping below uses the closest safe available pins.
- *     Please cross-check with the Nice!Nano v2 pinout before soldering.
+ *  Right side (top to bottom, skipping VCC/RAW/RST/GND):
+ *   Pin 21 → P0.31   (A0)
+ *   Pin 20 → P0.29   (A1)
+ *   Pin 19 → P0.02   (A2)
+ *   Pin 18 → P1.15   (A3)
+ *   Pin 17 → P1.13   (A4)
+ *   Pin 16 → P1.11   (A5)
+ *   Pin 15 → P0.10   (15)
+ *   Pin 14 → P0.09   (14)  -- also SDA
+ *   Pin 13 → P0.13   -- actually "SCL" labelled pin on nice_nano
+ *             wait — see note below
  *
- * Recommended approach: use the pin numbers printed on Nice!Nano silkscreen.
- * Nice!Nano v2 left side  (top→bottom): GND,1,0,2,3,4,5,6,7,8,9,10,11,12,13
- * Nice!Nano v2 right side (top→bottom): GND,RAW,RST,VCC,21,20,19,18,17,16,15
+ * ⚠️  nice_nano only exposes these pins safely. We have 15 cols + 5 rows = 20 pins needed.
+ *     All 20 fit within the available GPIOs below.
+ *
+ * Rows (5):   use left-side pins D2–D6  (P0.17, P0.20, P0.22, P0.24, P1.00)
+ * Cols (15):  use D7,D8,D9 + A0–A5 + pins 14,15 + D0,D1 + two more (P1.02, P1.04 re-used carefully)
+ *
+ * Final safe assignment:
+ *  Row 0 (B0) → P0.17
+ *  Row 1 (B1) → P0.20
+ *  Row 2 (B2) → P0.22
+ *  Row 3 (B3) → P0.24
+ *  Row 4 (B7) → P1.00
+ *
+ *  Col  0 (F5) → P0.31  (A0)
+ *  Col  1 (F6) → P0.29  (A1)
+ *  Col  2 (F7) → P0.02  (A2)
+ *  Col  3 (B6) → P1.15  (A3)
+ *  Col  4 (B5) → P1.13  (A4)
+ *  Col  5 (B4) → P1.11  (A5)
+ *  Col  6 (D7) → P0.10  (15)
+ *  Col  7 (D4) → P0.09  (14)
+ *  Col  8 (D5) → P0.08  (D0/RX)
+ *  Col  9 (C7) → P0.06  (D1/TX)
+ *  Col 10 (C6) → P0.11  (D7)
+ *  Col 11 (D3) → P1.04  (D8)
+ *  Col 12 (D2) → P1.06  (D9)
+ *  Col 13 (D1) → P0.04  -- nice_nano SDA (check if available on your board)
+ *  Col 14 (D0) → P0.26  -- nice_nano SCL (check if available on your board)
+ *
+ * ⚠️  If P0.04 or P0.26 are not broken out on your board,
+ *     you may need to remap col 13 and col 14 to different pins.
+ *     Some Nice!Nano variants label these as I2C pins and do expose them.
  */
 
 #include <dt-bindings/zmk/matrix_transform.h>
@@ -66,29 +93,29 @@
         diode-direction = "col2row";
 
         row-gpios
-            = <&pro_micro 4  (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>   /* B0 → D4  */
-            , <&pro_micro 5  (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>   /* B1 → D5  */
-            , <&pro_micro 6  (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>   /* B2 → D6  */
-            , <&pro_micro 7  (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>   /* B3 → D7  */
-            , <&pro_micro 8  (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>   /* B7 → D8  */
+            = <&gpio0 17 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>   /* Row 0: B0 */
+            , <&gpio0 20 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>   /* Row 1: B1 */
+            , <&gpio0 22 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>   /* Row 2: B2 */
+            , <&gpio0 24 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>   /* Row 3: B3 */
+            , <&gpio1  0 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>   /* Row 4: B7 */
             ;
 
         col-gpios
-            = <&pro_micro 20 GPIO_ACTIVE_HIGH>   /* F5 → A2  col 0  */
-            , <&pro_micro 19 GPIO_ACTIVE_HIGH>   /* F6 → A1  col 1  */
-            , <&pro_micro 18 GPIO_ACTIVE_HIGH>   /* F7 → A0  col 2  */
-            , <&pro_micro 15 GPIO_ACTIVE_HIGH>   /* B6 → 15  col 3  */
-            , <&pro_micro 14 GPIO_ACTIVE_HIGH>   /* B5 → 14  col 4  */
-            , <&pro_micro 16 GPIO_ACTIVE_HIGH>   /* B4 → 16  col 5  */
-            , <&pro_micro 10 GPIO_ACTIVE_HIGH>   /* D7 → 10  col 6  */
-            , <&pro_micro 9  GPIO_ACTIVE_HIGH>   /* D4 → 9   col 7  */
-            , <&pro_micro 21 GPIO_ACTIVE_HIGH>   /* D5 → 21  col 8  */
-            , <&pro_micro 3  GPIO_ACTIVE_HIGH>   /* C7 → 3   col 9  */
-            , <&pro_micro 2  GPIO_ACTIVE_HIGH>   /* C6 → 2   col 10 */
-            , <&pro_micro 0  GPIO_ACTIVE_HIGH>   /* D3 → 0   col 11 */
-            , <&pro_micro 1  GPIO_ACTIVE_HIGH>   /* D2 → 1   col 12 */
-            , <&pro_micro 11 GPIO_ACTIVE_HIGH>   /* D1 → 11  col 13 */
-            , <&pro_micro 12 GPIO_ACTIVE_HIGH>   /* D0 → 12  col 14 */
+            = <&gpio0 31 GPIO_ACTIVE_HIGH>   /* Col  0: F5 */
+            , <&gpio0 29 GPIO_ACTIVE_HIGH>   /* Col  1: F6 */
+            , <&gpio0  2 GPIO_ACTIVE_HIGH>   /* Col  2: F7 */
+            , <&gpio1 15 GPIO_ACTIVE_HIGH>   /* Col  3: B6 */
+            , <&gpio1 13 GPIO_ACTIVE_HIGH>   /* Col  4: B5 */
+            , <&gpio1 11 GPIO_ACTIVE_HIGH>   /* Col  5: B4 */
+            , <&gpio0 10 GPIO_ACTIVE_HIGH>   /* Col  6: D7 */
+            , <&gpio0  9 GPIO_ACTIVE_HIGH>   /* Col  7: D4 */
+            , <&gpio0  8 GPIO_ACTIVE_HIGH>   /* Col  8: D5 */
+            , <&gpio0  6 GPIO_ACTIVE_HIGH>   /* Col  9: C7 */
+            , <&gpio0 11 GPIO_ACTIVE_HIGH>   /* Col 10: C6 */
+            , <&gpio1  4 GPIO_ACTIVE_HIGH>   /* Col 11: D3 */
+            , <&gpio1  6 GPIO_ACTIVE_HIGH>   /* Col 12: D2 */
+            , <&gpio0  4 GPIO_ACTIVE_HIGH>   /* Col 13: D1 */
+            , <&gpio0 26 GPIO_ACTIVE_HIGH>   /* Col 14: D0 */
             ;
     };
 };
