@@ -1,0 +1,57 @@
+/*
+ * SiCK-68 ZMK Keymap
+ * Converted from QMK Configurator JSON (handwired_sick68_layout_65_ansi_2026-04-22.json)
+ *
+ * Layer 0: Base (65% ANSI)
+ * Layer 1: Function layer (Fn key = MO(1))
+ */
+
+#include <behaviors.dtsi>
+#include <dt-bindings/zmk/keys.h>
+#include <dt-bindings/zmk/bt.h>
+#include <dt-bindings/zmk/outputs.h>
+
+/ {
+    keymap {
+        compatible = "zmk,keymap";
+
+        /* ── Layer 0: Base ─────────────────────────────────────────────────────
+         *  ESC  1    2    3    4    5    6    7    8    9    0    -    =    BSPC GRV
+         *  TAB  Q    W    E    R    T    Y    U    I    O    P    [    ]    \    DEL
+         *  CAPS A    S    D    F    G    H    J    K    L    ;    '         ENT  PGUP
+         *  LSFT      Z    X    C    V    B    N    M    ,    .    /    RSFT UP   PGDN
+         *  LCTL LGUI LALT           SPC            RALT MO1  RCTL LEFT DOWN RGHT
+         */
+        default_layer {
+            bindings = <
+                &kp ESC   &kp N1   &kp N2   &kp N3   &kp N4   &kp N5   &kp N6   &kp N7   &kp N8   &kp N9   &kp N0   &kp MINUS &kp EQUAL &kp BSPC  &kp GRAVE
+                &kp TAB   &kp Q    &kp W    &kp E    &kp R    &kp T    &kp Y    &kp U    &kp I    &kp O    &kp P    &kp LBKT  &kp RBKT  &kp BSLH  &kp DEL
+                &kp CAPS  &kp A    &kp S    &kp D    &kp F    &kp G    &kp H    &kp J    &kp K    &kp L    &kp SEMI &kp SQT             &kp RET   &kp PG_UP
+                &kp LSHFT          &kp Z    &kp X    &kp C    &kp V    &kp B    &kp N    &kp M    &kp COMMA &kp DOT &kp FSLH  &kp RSHFT &kp UP    &kp PG_DN
+                &kp LCTRL &kp LGUI &kp LALT                   &kp SPACE                  &kp RALT  &mo 1   &kp RCTRL &kp LEFT &kp DOWN  &kp RIGHT
+            >;
+        };
+
+        /* ── Layer 1: Function ─────────────────────────────────────────────────
+         *  ---  F1   F2   F3   F4   F5   F6   F7   F8   F9   F10  F11  F12  DEL  INS
+         *  ---  ---  UP   ---  ---  ---  ---  ---  ---  ---  ---  ---  ---  ---  MUTE
+         *  ---  LEFT DOWN RGHT ---  ---  ---  ---  ---  ---  ---  ---       ---  VOLU
+         *  ---       ---  ---  BLDN BLTG BLUP ---  ---  ---  ---  ---  ---  ---  VOLD
+         *  ---  ---  ---             ---            ---  ---  ---  PREV PLAY NEXT
+         *
+         *  Note: QMK's BL_DOWN/BL_TOGG/BL_UP have no ZMK equivalent for Nice!Nano
+         *        (Nice!Nano has no hardware backlight). Mapped to BT controls instead.
+         *  Note: QMK MS_* (mouse keys) mapped to ZMK equivalents are commented out
+         *        — enable if you add zmk-mouse to your config.
+         */
+        fn_layer {
+            bindings = <
+                &trans    &kp F1   &kp F2   &kp F3   &kp F4   &kp F5   &kp F6   &kp F7   &kp F8   &kp F9   &kp F10  &kp F11   &kp F12   &kp DEL   &kp INS
+                &trans    &trans   &kp UP   &trans   &trans   &trans   &trans   &trans   &trans   &trans   &trans   &trans    &trans    &trans    &kp C_MUTE
+                &trans    &kp LEFT &kp DOWN &kp RIGHT &trans  &trans   &trans   &trans   &trans   &trans   &trans   &trans              &trans    &kp C_VOL_UP
+                &trans             &trans   &trans   &bt BT_PRV &bt BT_CLR &bt BT_NXT &trans &trans &trans  &trans   &trans    &trans    &trans    &kp C_VOL_DN
+                &trans    &trans   &trans                     &trans                     &trans    &trans  &trans    &trans    &trans    &trans
+            >;
+        };
+    };
+};
